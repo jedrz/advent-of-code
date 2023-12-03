@@ -40,17 +40,14 @@ def solve1(matrix) -> int:
 
             if is_digit:
                 current_digits += char
-                #print(char, current_digits, row_index, col_index)
-            # last digit in row
-            elif is_digit \
-                 and is_last_col \
-                 and can_be_part_number():
-                part_numbers += [int(current_digits)]
-            # current char non digit but previous one was
-            elif current_digits \
-                 and can_be_part_number():
-                part_numbers += [int(current_digits)]
-                current_digits = ''
+                # last digit in row
+                if is_last_col and can_be_part_number():
+                    part_numbers += [int(current_digits)]
             else:
+                # current char non digit but previous one was
+                if current_digits and can_be_part_number():
+                    part_numbers += [int(current_digits)]
                 current_digits = ''
     return sum(part_numbers)
+
+
