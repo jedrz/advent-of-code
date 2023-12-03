@@ -3,6 +3,8 @@
 
 import numpy
 import re
+from collections import defaultdict
+import math
 
 
 def part1(input_filename: str) -> int:
@@ -52,7 +54,7 @@ def solve1(matrix) -> int:
     return sum(part_numbers)
 
 
-def part_1_alt(input_filename: str):
+def part_1_and_2(input_filename: str):
     with open(input_filename) as f:
         board = [line.rstrip() for line in f]
         size = len(board[0])
@@ -62,6 +64,7 @@ def part_1_alt(input_filename: str):
                                   if not board[r][c].isdigit() and board[r][c] != '.'}
 
         part_numbers = []
+        part_numbers_adjacent_to_symbol_positions = defaultdict(lambda: [])
 
         for row_idx, row in enumerate(board):
             for number_match in re.finditer(r'\d+', row):
@@ -71,4 +74,11 @@ def part_1_alt(input_filename: str):
                 if surroundings_positions & only_symbols_positions:
                     part_numbers += [int(number_match.group())]
 
+                for pos in surroundings_positions & only_symbols_positions:
+                    part_numbers_adjacent_to_symbol_positions[pos] += [int(number_match.group())]
+
         print(sum(part_numbers))
+
+        print(sum([math.prod(part_numbers)
+                   for part_numbers in part_numbers_adjacent_to_symbol_positions.values()
+                   if len(part_numbers) == 2]))
