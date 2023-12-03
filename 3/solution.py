@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy
+import re
 
 
 def part1(input_filename: str) -> int:
@@ -51,3 +52,23 @@ def solve1(matrix) -> int:
     return sum(part_numbers)
 
 
+def part_1_alt(input_filename: str):
+    with open(input_filename) as f:
+        board = [line.rstrip() for line in f]
+        size = len(board[0])
+        only_symbols_positions = {(r, c)
+                                  for r in range(size)
+                                  for c in range(size)
+                                  if not board[r][c].isdigit() and board[r][c] != '.'}
+
+        part_numbers = []
+
+        for row_idx, row in enumerate(board):
+            for number_match in re.finditer(r'\d+', row):
+                surroundings_positions = {(r, c)
+                                          for r in range(row_idx - 1, row_idx + 2)
+                                          for c in range(number_match.start() - 1, number_match.end() + 1)}
+                if surroundings_positions & only_symbols_positions:
+                    part_numbers += [int(number_match.group())]
+
+        print(sum(part_numbers))
