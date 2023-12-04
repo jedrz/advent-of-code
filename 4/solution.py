@@ -9,7 +9,7 @@ class Card:
     winning_numbers: set[int]
     owned_numbers: set[int]
 
-    def score(self) -> int:
+    def points(self) -> int:
         mutual_numbers = list(self.winning_numbers & self.owned_numbers)
         match mutual_numbers:
             case []:
@@ -21,7 +21,7 @@ class Card:
 def part1(input_filename: str) -> int:
     with open(input_filename) as f:
         cards = map(parse_card, f)
-        return sum(map(lambda card: card.score(), cards))
+        return sum(map(lambda card: card.points(), cards))
 
 
 def parse_card(line: str) -> Card:
