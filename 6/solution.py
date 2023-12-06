@@ -17,11 +17,18 @@ class Race:
         speed = hold_time
         return speed * (self.time - hold_time)
 
+    # wyliczenie pierwiastków równania kwadratowego:
+    # d > h * (t - h)
+    # h^2 - th + d > 0
+    def calculate_min_max_hold_times(self) -> (int, int):
+        hold_time_f = lambda mult: (self.time + mult * math.sqrt(self.time ** 2 - 4 * self.distance)) / 2
+        return (hold_time_f(-1), hold_time_f(1))
 
-def part_1(input_filename: str):
+
+def part_1_and_2(input_filename: str):
     with open(input_filename) as f:
         races = parse_input(f.readlines())
-        print(solve1(races))
+        print(solve(races))
 
 
 def parse_input(lines) -> list[Race]:
@@ -34,9 +41,14 @@ def parse_numbers(line):
     return map(int, line.split())
 
 
-def solve1(races: list[Race]) -> int:
-    return math.prod(find_ways_to_win(race) for race in races)
+def solve(races: list[Race]) -> int:
+    return math.prod(find_ways_to_win_better(race) for race in races)
 
 
 def find_ways_to_win(race: Race) -> int:
     return len(list(hold_time for hold_time in range(race.time) if race.beats_distance(hold_time)))
+
+
+def find_ways_to_win_better(race: Race) -> int:
+    (min, max) = race.calculate_min_max_hold_times()
+    return math.floor(max - min)

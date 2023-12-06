@@ -31,7 +31,7 @@ class LocationRange:
 
     @property
     def source_end(self):
-        return self.source_start + self.range_length - 1
+        return self.source_start + self.range_length
 
     @property
     def destination_end(self):
