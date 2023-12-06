@@ -1,65 +1,90 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import dataclasses
 from dataclasses import dataclass
 from typing import Optional
+from pprint import pprint
 
 
 @dataclass
 class SeedRange:
     start: int
-    range_length: int
+    end: int
 
-    @property
-    def end(self) -> int:
-        return self.start + self.range_length - 1
+    def __post_init__(self):
+        assert self.start < self.end, f'{self.start} < {self.end}'
 
     def as_range(self) -> range:
-        return range(self.start, self.start + self.range_length)
+        return range(self.start, self.end)
 
     @classmethod
-    def from_start_end(cls, start: int, end: int) -> SeedRange:
-        return SeedRange(start, end - start + 1)
+    def from_start_range(cls, start: int, range_length: int):
+        return SeedRange(start, start + range_length)
 
 
 @dataclass
 class LocationRange:
+    # end is exclusive
     destination_start: int
+    destination_end: int
     source_start: int
-    range_length: int
+    source_end: int
+
+    def __post_init__(self):
+        assert self.source_start < self.source_end, f'{self.source_start} < f{self.source_end}'
+        assert self.destination_start < self.destination_end, f'{self.destination_start} < {self.destination_end}'
+
+    @classmethod
+    def from_dest_source_range(cls,
+                               destination_start: int,
+                               source_start: int,
+                               range_length: int):
+        return LocationRange(destination_start, destination_start + range_length,
+                             source_start, source_start + range_length)
+
+    @classmethod
+    def identity_range(cls, start: int, end: int):
+        return LocationRange(start, end, start, end)
 
     @property
-    def source_end(self):
-        return self.source_start + self.range_length
-
-    @property
-    def destination_end(self):
-        return self.destination_start + self.range_length
+    def difference(self):
+        return self.destination_start - self.source_start
 
     def lookup(self, start_location: int) -> Optional[int]:
         if start_location >= self.source_start \
-           and start_location < self.source_start + self.range_length:
-            return self.destination_start + start_location - self.source_start
+           and start_location < self.source_end:
+            return start_location + self.difference
         return None
 
     def flow(self, seed_range: SeedRange) -> Optional[SeedRange]:
         adj_start = max(self.source_start, seed_range.start)
         adj_end = min(self.source_end, seed_range.end)
         if adj_start < adj_end:
-            r = adj_end - adj_start
-            print(adj_start, adj_end, r)
-            print(seed_range)
-            print(self)
-            res = SeedRange.from_start_end(adj_start, adj_end)
-            print(res)
-        return None
+            return SeedRange(adj_start + self.difference, adj_end + self.difference)
 
 
-@dataclass
 class LocationMap:
-    name: str
-    ranges: list[LocationRange]
+
+    def __init__(self, name, mapping_ranges):
+        self.name = name
+        mapping_ranges = list(sorted(mapping_ranges, key=lambda r: r.source_start))
+        self.ranges = []
+        if mapping_ranges[0].source_start > 0:
+            self.ranges += [
+                LocationRange.identity_range(0, mapping_ranges[0].source_start)
+            ]
+        for before_range, after_range in zip(mapping_ranges, mapping_ranges[1:]):
+            self.ranges += [before_range]
+            if before_range.source_end < after_range.source_start:
+                self.ranges += [LocationRange.identity_range(before_range.source_end, after_range.source_start)]
+        self.ranges += [
+            mapping_ranges[-1]
+        ]
+        max_end = 100
+        if mapping_ranges[-1].source_end < max_end:
+            self.ranges += [
+                LocationRange.identity_range(mapping_ranges[-1].source_end, max_end)
+            ]
 
     def lookup(self, start_location: int) -> int:
         for r in self.ranges:
@@ -73,24 +98,17 @@ class LocationMap:
         for r in self.ranges:
             if range_seed := r.flow(seed_range):
                 result.append(range_seed)
+        #print(f'from {seed_range}')
+        #print(f'to {result}')
         return result
 
 
-    # def minimize(self) -> LocationMap:
-    #     combined_ranges = []
-    #     for sorted_range in sorted(self.ranges, key=lambda r: r.source_start):
-    #         if combined_ranges:
-    #             last_combined = combined_ranges[-1]
-    #             if sorted_range.source_start == last_combined.source_end:
-    #                 last_combined.range_length += sorted_range.range_length
-    #             elif sorted_range.source_start < last_combined.source_end:
-    #                 raise Exception('Need to minimize range!')
-    #             else:
-    #                 combined_ranges.append(dataclasses.replace(sorted_range))
-    #         else:
-    #             combined_ranges.append(dataclasses.replace(sorted_range))
-    #     print('Minimized from {} to {}'.format(len(self.ranges), len(combined_ranges)))
-    #     return LocationMap(self.name, combined_ranges)
+    def __repr__(self):
+        return f"""LocationMap(
+          {self.name},
+          {pprint(self.ranges)}
+        )
+        """
 
 
 def part12(input_filename: str):
@@ -100,9 +118,8 @@ def part12(input_filename: str):
         seeds = parse_seeds(splitted_input[0])
         seed_ranges = parse_seed_ranges(splitted_input[0])
         location_maps = list(map(parse_map, splitted_input[1:]))
-        # minimized_location_maps = list(map(lambda m: m.minimize(), location_maps))
         print(solve1(seeds, location_maps))
-        print(solve2_bruteforce(seed_ranges, location_maps))
+        #print(solve2_bruteforce(seed_ranges, location_maps))
         print(solve2(seed_ranges, location_maps))
 
 
@@ -116,7 +133,7 @@ def parse_seed_ranges(line: str) -> list[SeedRange]:
     ranges = []
     for r in range(0, len(numbers), 2):
         [start, length] = numbers[r:r + 2]
-        ranges.append(SeedRange(start, length))
+        ranges.append(SeedRange.from_start_range(start, length))
     return ranges
 
 
@@ -127,8 +144,7 @@ def parse_map(text: str) -> LocationMap:
     for range_description in splitted[1:]:
         if range_description:
             range_components = list(map(int, range_description.split()))
-            ranges.append(LocationRange(range_components[0], range_components[1], range_components[2]))
-    ranges = list(sorted(ranges, key=lambda r: r.source_start))
+            ranges.append(LocationRange.from_dest_source_range(range_components[0], range_components[1], range_components[2]))
     return LocationMap(name, ranges)
 
 
@@ -150,6 +166,7 @@ def solve2_bruteforce(seed_ranges: list[SeedRange], location_maps: list[Location
 
 
 def solve2(seed_ranges: list[SeedRange], location_maps: list[LocationMap]) -> int:
+    #pprint(location_maps)
     expanded = flow_ranges(seed_ranges, location_maps)
     return list(sorted(expanded, key=lambda r: r.start))[0].start
 
