@@ -39,8 +39,8 @@ class LocationRange:
 
     def lookup(self, start_location: int) -> Optional[int]:
         if start_location >= self.source_start \
-           and start_location <= self.source_start + self.range_length:
-            return start_location + self.destination_start - self.source_start
+           and start_location < self.source_start + self.range_length:
+            return self.destination_start + start_location - self.source_start
         return None
 
     def flow(self, seed_range: SeedRange) -> Optional[SeedRange]:
@@ -103,7 +103,7 @@ def part12(input_filename: str):
         # minimized_location_maps = list(map(lambda m: m.minimize(), location_maps))
         print(solve1(seeds, location_maps))
         print(solve2_bruteforce(seed_ranges, location_maps))
-        print(solve2(seed_ranges, location_maps))
+        #print(solve2(seed_ranges, location_maps))
 
 
 def parse_seeds(line: str) -> list[int]:
@@ -128,6 +128,9 @@ def parse_map(text: str) -> LocationMap:
         if range_description:
             range_components = list(map(int, range_description.split()))
             ranges.append(LocationRange(range_components[0], range_components[1], range_components[2]))
+    print( ranges, 'before')
+    ranges = list(sorted(ranges, key=lambda r: r.source_start))
+    print(ranges)
     return LocationMap(name, ranges)
 
 
