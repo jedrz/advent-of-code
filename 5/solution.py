@@ -69,7 +69,7 @@ class LocationMap:
 
 
     def flow(self, seed_range: SeedRange) -> list[SeedRange]:
-        result = [seed_range]
+        result = []
         for r in self.ranges:
             if range_seed := r.flow(seed_range):
                 result.append(range_seed)
@@ -103,7 +103,7 @@ def part12(input_filename: str):
         # minimized_location_maps = list(map(lambda m: m.minimize(), location_maps))
         print(solve1(seeds, location_maps))
         print(solve2_bruteforce(seed_ranges, location_maps))
-        #print(solve2(seed_ranges, location_maps))
+        print(solve2(seed_ranges, location_maps))
 
 
 def parse_seeds(line: str) -> list[int]:
@@ -128,9 +128,7 @@ def parse_map(text: str) -> LocationMap:
         if range_description:
             range_components = list(map(int, range_description.split()))
             ranges.append(LocationRange(range_components[0], range_components[1], range_components[2]))
-    print( ranges, 'before')
     ranges = list(sorted(ranges, key=lambda r: r.source_start))
-    print(ranges)
     return LocationMap(name, ranges)
 
 
