@@ -38,18 +38,20 @@ def extend_paths(grid, start_pos):
         next_positions = list(filter(is_not_visited, extend_position(grid, current_pos)))
         for next_pos in next_positions:
             paths[next_pos] = paths[current_pos] + [current_pos]
-        current_positions += next_positions
-    print('part1', len(max(paths.values(), key=len)))
+            current_positions += next_positions
+            print('part1', len(max(paths.values(), key=len)))
 
     # fill outside
     loop_path = list(itertools.chain(*list(sorted(paths.values(), key=len))[-2:]))
-    outside = set(loop_path)
-    queue = [pos for pos in grid.keys() if pos in paths]
+    queue = [flood_from
+             for pos in loop_path
+             for flood_from in start_flood_from(grid, pos)]
+    outside = set()
     grid_size = (max(grid.keys(), key=operator.itemgetter(0))[0] + 1) \
         * (max(grid.keys(), key=operator.itemgetter(1))[1] + 1)
-    print(outside)
     print(queue)
     print(grid_size)
+    print(loop_path)
     while queue:
         pos = queue.pop(0)
         outside |= set([pos])
@@ -61,7 +63,7 @@ def extend_paths(grid, start_pos):
                           if (adj_pos := (x + x_offset, y + y_offset)) in grid \
                           and adj_pos not in outside \
                           and adj_pos not in queue \
-                          and not (pos in loop_path and not can_go_from(adj_pos, (x_offset, y_offset)))]
+                          and ((pos in loop_path and can_go_from(adj_pos, (x_offset, y_offset))) or pos not in loop_path)]
         queue += next_positions
         print(next_positions)
     print(grid_size - len(outside))
@@ -90,5 +92,20 @@ def can_go_from(tile, offset):
         case 'F', ((0, -1) | (-1, 0)):
             return True
     return False
+
+
+def start_flood_from(grid, pos):
+    tile = grid[pos]
+    x, y = pos
+    match tile:
+        case 'L':
+            return [(x + xn, y + yn) for xn, yn in [(-1, 0), (0, 1), (-1, 1)] if (x + xn, y + yn) in grid and grid[(x + xn, y + yn)] == '.']
+        case 'J':
+            return [(x + xn, y + yn) for xn, yn in [(1, 0), (0, 1), (1, 1)] if (x + xn, y + yn) in grid and grid[(x + xn, y + yn)] == '.']
+        case '7':
+            return [(x + xn, y + yn) for xn, yn in [(1, 0), (0, -1), (1, -1)] if (x + xn, y + yn) in grid and grid[(x + xn, y + yn)] == '.']
+        case 'F':
+            return [(x + xn, y + yn) for xn, yn in [(-1, 0), (0, -1), (-1, -1)] if (x + xn, y + yn) in grid and grid[(x + xn, y + yn)] == '.']
+    return []
 
 
