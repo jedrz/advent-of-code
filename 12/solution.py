@@ -15,10 +15,21 @@ def part_1(input_filename):
         print(sum(calculate_arrangements(input) for input in inputs))
 
 
+def part_2(input_filename):
+    with open(input_filename) as f:
+        inputs = [parse_input(unfold_input(line)) for line in f]
+        print(sum(calculate_arrangements(input) for input in inputs))
+
+
 def parse_input(line):
     [conditions, damaged_groups_s] = line.split()
     damaged_groups = list(map(int, damaged_groups_s.split(',')))
     return SpringsConditions(conditions, damaged_groups)
+
+
+def unfold_input(line):
+    [conditions, damaged_groups] = line.split()
+    return '?'.join([conditions] * 5) + ' ' + ','.join([damaged_groups] * 5)
 
 
 # brute force
