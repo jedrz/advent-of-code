@@ -1,0 +1,53 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from dataclasses import dataclass
+
+@dataclass
+class SpringsConditions:
+    conditions: str
+    damaged_groups: list[int]
+
+
+def part_1(input_filename):
+    with open(input_filename) as f:
+        inputs = [parse_input(line) for line in f]
+        print(sum(calculate_arrangements(input) for input in inputs))
+
+
+def parse_input(line):
+    [conditions, damaged_groups_s] = line.split()
+    damaged_groups = list(map(int, damaged_groups_s.split(',')))
+    return SpringsConditions(conditions, damaged_groups)
+
+
+# brute force
+def calculate_arrangements(springs_condtions: SpringsConditions) -> int:
+    return sum(1
+               for possible_conditions
+               in generate_possible_conditions(springs_condtions.conditions)
+               if is_valid_arrangement(springs_condtions, possible_conditions))
+
+
+def generate_possible_conditions(conditions: str):
+    if not conditions:
+        return ['']
+
+    cond = conditions[0]
+    rest_conds = conditions[1:]
+    all_possible_for_rest = generate_possible_conditions(rest_conds)
+    all_possible = []
+    for possible_for_rest in all_possible_for_rest:
+        if cond == '?':
+            all_possible += [
+                '#' + possible_for_rest,
+                '.' + possible_for_rest
+            ]
+        else:
+            all_possible += [cond + possible_for_rest]
+    return all_possible
+
+
+def is_valid_arrangement(springs_conditions, possible_conditions):
+    damaged_groups = [len(c) for c in possible_conditions.split('.') if c]
+    return damaged_groups == springs_conditions.damaged_groups
