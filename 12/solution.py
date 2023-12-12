@@ -1,34 +1,38 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
 from dataclasses import dataclass
+import functools
+
 
 @dataclass
 class SpringsConditions:
     conditions: str
-    damaged_groups: list[int]
+    damaged_groups: tuple[int]
 
 
 def part_1(input_filename):
     with open(input_filename) as f:
         inputs = [parse_input(line) for line in f]
         print(sum(calculate_arrangements(input) for input in inputs))
+        print(sum(calculate_arrangements_count(input.conditions, input.damaged_groups) for input in inputs))
 
 
 def part_2(input_filename):
     with open(input_filename) as f:
         inputs = [parse_input(unfold_input(line)) for line in f]
-        print(sum(calculate_arrangements(input) for input in inputs))
+        print(sum(calculate_arrangements_count(input.conditions, input.damaged_groups) for input in inputs))
 
 
 def parse_input(line):
-    [conditions, damaged_groups_s] = line.split()
-    damaged_groups = list(map(int, damaged_groups_s.split(',')))
+    [conditions, damaged_groups_s] = line.strip().split()
+    damaged_groups = tuple(map(int, damaged_groups_s.split(',')))
     return SpringsConditions(conditions, damaged_groups)
 
 
 def unfold_input(line):
-    [conditions, damaged_groups] = line.split()
+    [conditions, damaged_groups] = line.strip().split()
     return '?'.join([conditions] * 5) + ' ' + ','.join([damaged_groups] * 5)
 
 
@@ -60,5 +64,47 @@ def generate_possible_conditions(conditions: str):
 
 
 def is_valid_arrangement(springs_conditions, possible_conditions):
-    damaged_groups = [len(c) for c in possible_conditions.split('.') if c]
+    damaged_groups = tuple(len(c) for c in possible_conditions.split('.') if c)
     return damaged_groups == springs_conditions.damaged_groups
+
+
+@functools.cache
+def calculate_arrangements_count(conditions: str,
+                                 damaged_groups: tuple[int],
+                                 in_group: bool = False) -> int:
+    if not damaged_groups:
+        if '#' in conditions:
+            return 0
+        else:
+            return 1
+    if not conditions:
+        if sum(damaged_groups) > 0:
+            return 0
+        else:
+            return 1
+
+    cond, rest_conds = conditions[0], conditions[1:]
+    damaged_group, rest_damaged_groups = damaged_groups[0], damaged_groups[1:]
+
+    if damaged_group == 0:
+        if cond == '#':
+            return 0
+        else:
+            return calculate_arrangements_count(rest_conds, rest_damaged_groups, False)
+    # if damaged_group > 0:
+    if in_group:
+        if cond == '.':
+            return 0
+        else:
+            return calculate_arrangements_count(rest_conds,
+                                                (damaged_group - 1, ) + rest_damaged_groups,
+                                                in_group)
+    if cond == '.':
+        return calculate_arrangements_count(rest_conds, damaged_groups, False)
+    if cond == '#':
+        return calculate_arrangements_count(rest_conds,
+                                            (damaged_group - 1, ) + rest_damaged_groups,
+                                            True)
+    # if cond == '?':
+    return calculate_arrangements_count(rest_conds, damaged_groups, False) \
+        + calculate_arrangements_count(rest_conds, (damaged_group - 1, ) + rest_damaged_groups, True)
