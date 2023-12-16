@@ -14,15 +14,31 @@ def part_1(input_filename):
         print(energize(grid))
 
 
+def part_2(input_filename):
+    with open(input_filename) as f:
+        grid = parse_grid(f)
+        max_pos_xy = max(grid.keys())[0]
+        start_froms = [e
+                       for i in range(max_pos_xy + 1)
+                       for e in [
+                               Energized((-1, i), direction=(1, 0)),
+                               Energized((max_pos_xy + 1, i), direction=(-1, 0)),
+                               Energized((i, -1), direction=(0, 1)),
+                               Energized((i, max_pos_xy + 1), direction=(0, -1)),
+                       ]
+                       ]
+        print(max(map(lambda start_from: energize(grid, start_from), start_froms)))
+
+
 def parse_grid(lines):
     return {(x, y): c
             for y, line in enumerate(lines)
             for x, c in enumerate(line.strip())}
 
 
-def energize(grid):
+def energize(grid, start_from=Energized(pos=(-1, 0), direction=(1, 0))):
     visited = set()
-    queue = [Energized(pos=(-1, 0), direction=(1, 0))]
+    queue = [start_from]
 
     while queue:
         energized = queue.pop()
