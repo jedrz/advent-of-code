@@ -28,8 +28,8 @@ def find_least_heat_loss(heat_loss_map, min_in_same_direction, max_in_same_direc
     start_pos = (0, 0)
     end_pos = max(heat_loss_map.keys())
     previous = {}
-    distances = defaultdict(lambda: INF)
-    distances[(start_pos, (0, 0))] = 0
+    losses = defaultdict(lambda: INF)
+    losses[(start_pos, (0, 0))] = 0
     q = [(0, start_pos, (0, 0))]
 
     while q:
@@ -38,8 +38,8 @@ def find_least_heat_loss(heat_loss_map, min_in_same_direction, max_in_same_direc
             return heat_loss
         nexts = get_nexts(heat_loss_map, pos, direction, min_in_same_direction, max_in_same_direction)
         for next_pos, next_dir, next_heat_loss in nexts:
-            if distances[(next_pos, next_dir)] > (better_distance := heat_loss + next_heat_loss):
-                distances[(next_pos, next_dir)] = better_distance
+            if losses[(next_pos, next_dir)] > (better_distance := heat_loss + next_heat_loss):
+                losses[(next_pos, next_dir)] = better_distance
                 previous[(next_pos, next_dir)] = (pos, direction)
                 heapq.heappush(q, (better_distance, next_pos, next_dir))
 
