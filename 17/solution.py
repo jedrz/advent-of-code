@@ -2,24 +2,10 @@
 # -*- coding: utf-8 -*-
 
 
-from dataclasses import dataclass, field
-from typing import Any
 from collections import defaultdict
 
 
 INF = 1000000000
-
-
-@dataclass(order=True)
-class PrioritizedPos:
-    heat_loss: int
-    pos: Any=field(compare=False)
-
-
-@dataclass
-class PreviousItem:
-    pos: tuple[int, int]
-    direction: tuple[int, int]
 
 
 def part_1_and_2(input_filename):
