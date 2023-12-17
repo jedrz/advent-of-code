@@ -3,6 +3,7 @@
 
 
 from collections import defaultdict
+import heapq
 
 
 INF = 1000000000
@@ -26,28 +27,23 @@ def parse_heat_loss_map(lines):
 def find_least_heat_loss(heat_loss_map, min_in_same_direction, max_in_same_direction):
     start_pos = (0, 0)
     end_pos = max(heat_loss_map.keys())
+    previous = {}
     distances = defaultdict(lambda: INF)
     distances[(start_pos, (0, 0))] = 0
-    previous = {}
-    q = [(start_pos, (0, 0))]
+    q = [(0, start_pos, (0, 0))]
 
     while q:
-        pos, direction = find_with_shortest_distance(q, distances)
+        heat_loss, pos, direction = heapq.heappop(q)
         if pos == end_pos:
-            return distances[(end_pos, direction)]
-        q.remove((pos, direction))
+            return heat_loss
         nexts = get_nexts(heat_loss_map, pos, direction, min_in_same_direction, max_in_same_direction)
         for next_pos, next_dir, next_heat_loss in nexts:
-            if distances[(next_pos, next_dir)] > (better_distance := distances[(pos, direction)] + next_heat_loss):
+            if distances[(next_pos, next_dir)] > (better_distance := heat_loss + next_heat_loss):
                 distances[(next_pos, next_dir)] = better_distance
                 previous[(next_pos, next_dir)] = (pos, direction)
-                q.append((next_pos, next_dir))
+                heapq.heappush(q, (better_distance, next_pos, next_dir))
 
     raise BaseException('Should not happen')
-
-
-def find_with_shortest_distance(q, distances):
-    return min(q, key=distances.get)
 
 
 def get_nexts(heat_loss_map, pos, direction, min_in_same_direction, max_in_same_direction):
